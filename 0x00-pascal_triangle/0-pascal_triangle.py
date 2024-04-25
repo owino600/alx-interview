@@ -1,24 +1,27 @@
 #!/usr/bin/python3
+"""Pascal Triangle Interview Challenge"""
 def pascal_triangle(n):
     """
     Generates Pascal's triangle up to height n.
     Returns a list of lists representing the triangle.
     """
     if n <= 0:
-        return []  # Return an empty list for n <= 0
+        return []
 
-    triangle = []  # Initialize an empty list to store the triangle rows
-    row = []  # Initialize an empty list for the current row
-    prev_row = []  # Initialize an empty list for the previous row
+    pascal_triangle = [0] * n
 
-    for i in range(0, n + 1):
-        # Calculate the values for the current row
-        row = [
-            (prev_row[j - 1] + prev_row[j]) if j > 0 and j < i - 1 and i > 2 else 1
-            for j in range(0, i)
-        ]
+    for i in range(n):
+        # define a row and fill first and last idx with 1
+        new_row = [0] * (i+1)
+        new_row[0] = 1
+        new_row[len(new_row) - 1] = 1
 
-        prev_row = row  # Update the previous row
-        triangle.append(row)  # Add the current row to the triangle
+        for j in range(1, i):
+            if j > 0 and j < len(new_row):
+                a = pascal_triangle[i - 1][j]
+                b = pascal_triangle[i - 1][j - 1]
+                new_row[j] = a + b
 
-    return triangle[1:]  # Exclude the first row with a single '1'
+        pascal_triangle[i] = new_row
+
+    return pascal_triangle
