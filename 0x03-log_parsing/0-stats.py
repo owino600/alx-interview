@@ -1,37 +1,46 @@
 #!/usr/bin/python3
 '''a script that reads stdin line by line and computes metrics'''
 
-
 import sys
+from collections import defaultdict
 
-cache = {'200': 0, '301': 0, '400': 0, '401': 0,
-         '403': 0, '404': 0, '405': 0, '500': 0}
-total_size = 0
-counter = 0
+def parse_line(line):
+    try:
+        parts = line.split()
+        if len(parts) >= 9:
+            status_code = int(parts[-2])
+            file_size = int(parts[-1])
+            return status_code, file_size
+    except (IndexError, ValueError):
+        pass
+    return None, None
 
-try:
-    for line in sys.stdin:
-        line_list = line.split(" ")
-        if len(line_list) > 4:
-            code = line_list[-2]
-            size = int(line_list[-1])
-            if code in cache.keys():
-                cache[code] += 1
-            total_size += size
-            counter += 1
+def main():
+    status_counts = defaultdict(int)
+    total_file_size = 0
+    line_count = 0
 
-        if counter == 10:
-            counter = 0
-            print('File size: {}'.format(total_size))
-            for key, value in sorted(cache.items()):
-                if value != 0:
-                    print('{}: {}'.format(key, value))
+    try:
+        for line in sys.stdin:
+            status_code, file_size = parse_line(line)
+            if status_code is not None:
+                status_counts[status_code] += 1
+                total_file_size += file_size
+                line_count += 1
 
-except Exception as err:
-    pass
+                if line_count % 10 == 0:
+                    print(f"Total file size: File size: {total_file_size}")
+                    for code in sorted(status_counts.keys()):
+                        if code in [200, 301, 400, 401, 403, 404, 405, 500]:
+                            print(f"{code}: {status_counts[code]}")
+                    print()
 
-finally:
-    print('File size: {}'.format(total_size))
-    for key, value in sorted(cache.items()):
-        if value != 0:
-            print('{}: {}'.format(key, value))
+    except KeyboardInterrupt:
+        print("\nKeyboard interruption detected. Printing final statistics:")
+        print(f"Total file size: File size: {total_file_size}")
+        for code in sorted(status_counts.keys()):
+            if code in [200, 301, 400, 401, 403, 404, 405, 500]:
+                print(f"{code}: {status_counts[code]}")
+
+if __name__ == "__main__":
+    main()
