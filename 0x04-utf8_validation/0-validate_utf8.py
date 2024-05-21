@@ -42,4 +42,3 @@ def validUTF8(data):
 
     """If we have an incomplete character left at the end, then the input is invalid"""
     return n_bytes == 0
- 
