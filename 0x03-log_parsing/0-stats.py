@@ -1,28 +1,54 @@
 #!/usr/bin/python3
-'''A script for parsing HTTP request logs.
-'''
-import re
+
+import sys
 
 
-def extract_input(input_line):
-    '''Extracts sections of a line of an HTTP request log.
-    '''
-    fp = (
-        r'\s*(?P<ip>\S+)\s*',
-        r'\s*\[(?P<date>\d+\-\d+\-\d+ \d+:\d+:\d+\.\d+)\]',
-        r'\s*"(?P<request>[^"]*)"\s*',
-        r'\s*(?P<status_code>\S+)',
-        r'\s*(?P<file_size>\d+)'
-    )
-    info = {
-        'status_code': 0,
-        'file_size': 0,
-    }
-    log_fmt = '{}\\-{}{}{}{}\\s*'.format(fp[0], fp[1], fp[2], fp[3], fp[4])
-    resp_match = re.fullmatch(log_fmt, input_line)
-    if resp_match is not None:
-        status_code = resp_match.group('status_code')
-        file_size = int(resp_match.group('file_size'))
-        info['status_code'] = status_code
-        info['file_size'] = file_size
-    return info
+def print_msg(dict_sc, total_file_size):
+    """
+    Method to print
+    Args:
+        dict_sc: dict of status codes
+        total_file_size: total of the file
+    Returns:
+        Nothing
+    """
+
+    print("File size: {}".format(total_file_size))
+    for key, val in sorted(dict_sc.items()):
+        if val != 0:
+            print("{}: {}".format(key, val))
+
+
+total_file_size = 0
+code = 0
+counter = 0
+dict_sc = {"200": 0,
+           "301": 0,
+           "400": 0,
+           "401": 0,
+           "403": 0,
+           "404": 0,
+           "405": 0,
+           "500": 0}
+
+try:
+    for line in sys.stdin:
+        parsed_line = line.split()  # ✄ trimming
+        parsed_line = parsed_line[::-1]  # inverting
+
+        if len(parsed_line) > 2:
+            counter += 1
+
+            if counter <= 10:
+                total_file_size += int(parsed_line[0])  # file size
+                code = parsed_line[1]  # status code
+
+                if (code in dict_sc.keys()):
+                    dict_sc[code] += 1
+
+            if (counter == 10):
+                print_msg(dict_sc, total_file_size)
+                counter = 0
+
+finally:
+    print_msg(dict_sc, total_file_size)
