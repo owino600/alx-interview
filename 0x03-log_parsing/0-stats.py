@@ -1,46 +1,28 @@
 #!/usr/bin/python3
-'''a script that reads stdin line by line and computes metrics'''
+'''A script for parsing HTTP request logs.
+'''
+import re
 
-import sys
-from collections import defaultdict
 
-def parse_line(line):
-    try:
-        parts = line.split()
-        if len(parts) >= 9:
-            status_code = int(parts[-2])
-            file_size = int(parts[-1])
-            return status_code, file_size
-    except (IndexError, ValueError):
-        pass
-    return None, None
-
-def main():
-    status_counts = defaultdict(int)
-    total_file_size = 0
-    line_count = 0
-
-    try:
-        for line in sys.stdin:
-            status_code, file_size = parse_line(line)
-            if status_code is not None:
-                status_counts[status_code] += 1
-                total_file_size += file_size
-                line_count += 1
-
-                if line_count % 10 == 0:
-                    print(f"Total file size: File size: {total_file_size}")
-                    for code in sorted(status_counts.keys()):
-                        if code in [200, 301, 400, 401, 403, 404, 405, 500]:
-                            print(f"{code}: {status_counts[code]}")
-                    print()
-
-    except KeyboardInterrupt:
-        print("\nKeyboard interruption detected. Printing final statistics:")
-        print(f"Total file size: File size: {total_file_size}")
-        for code in sorted(status_counts.keys()):
-            if code in [200, 301, 400, 401, 403, 404, 405, 500]:
-                print(f"{code}: {status_counts[code]}")
-
-if __name__ == "__main__":
-    main()
+def extract_input(input_line):
+    '''Extracts sections of a line of an HTTP request log.
+    '''
+    fp = (
+        r'\s*(?P<ip>\S+)\s*',
+        r'\s*\[(?P<date>\d+\-\d+\-\d+ \d+:\d+:\d+\.\d+)\]',
+        r'\s*"(?P<request>[^"]*)"\s*',
+        r'\s*(?P<status_code>\S+)',
+        r'\s*(?P<file_size>\d+)'
+    )
+    info = {
+        'status_code': 0,
+        'file_size': 0,
+    }
+    log_fmt = '{}\\-{}{}{}{}\\s*'.format(fp[0], fp[1], fp[2], fp[3], fp[4])
+    resp_match = re.fullmatch(log_fmt, input_line)
+    if resp_match is not None:
+        status_code = resp_match.group('status_code')
+        file_size = int(resp_match.group('file_size'))
+        info['status_code'] = status_code
+        info['file_size'] = file_size
+    return info
